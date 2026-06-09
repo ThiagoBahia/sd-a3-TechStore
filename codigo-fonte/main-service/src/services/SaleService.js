@@ -56,14 +56,43 @@ class SaleService {
   }
 
   async cancel(id) {
-    const sale = await saleRepo.cancel(id);
-    if (!sale) {
-      throw Object.assign(
-        new Error('Venda nao encontrada ou ja cancelada'),
-        { statusCode: 404 }
+    const client = await db.getClient();
+    try {
+      await client.query('BEGIN');
+
+      const saleResult = await client.query(
+        `UPDATE sales SET status = 'cancelled'
+         WHERE id = $1 AND status = 'confirmed'
+         RETURNING *`,
+        [id]
       );
+      const sale = saleResult.rows[0];
+      if (!sale) {
+        throw Object.assign(
+          new Error('Venda nao encontrada ou ja cancelada'),
+          { statusCode: 404 }
+        );
+      }
+
+      const itemsResult = await client.query(
+        'SELECT product_id, quantity FROM sale_items WHERE sale_id = $1',
+        [id]
+      );
+      for (const item of itemsResult.rows) {
+        await client.query(
+          'UPDATE products SET stock_quantity = stock_quantity + $1 WHERE id = $2',
+          [item.quantity, item.product_id]
+        );
+      }
+
+      await client.query('COMMIT');
+      return sale;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
-    return sale;
   }
 
   async delete(id) {
