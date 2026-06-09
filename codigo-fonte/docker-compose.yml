@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: techstore-db
+    environment:
+      POSTGRES_DB: techstore
+      POSTGRES_USER: techstore_user
+      POSTGRES_PASSWORD: techstore_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - techstore-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U techstore_user -d techstore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  main-service:
+    build:
+      context: ./main-service
+      dockerfile: Dockerfile
+    container_name: techstore-main
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: techstore
+      DB_USER: techstore_user
+      DB_PASSWORD: techstore_pass
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - techstore-network
+    restart: unless-stopped
+
+  reports-service:
+    build:
+      context: ./reports-service
+      dockerfile: Dockerfile
+    container_name: techstore-reports
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: techstore
+      DB_USER: techstore_user
+      DB_PASSWORD: techstore_pass
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - techstore-network
+    restart: unless-stopped
+
+networks:
+  techstore-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
