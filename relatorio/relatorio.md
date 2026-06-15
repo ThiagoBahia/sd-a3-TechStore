@@ -8,9 +8,9 @@
 
 | Nome Completo | Matrícula |
 |---|---|
-| (preencher) | (preencher) |
-| (preencher) | (preencher) |
-| (preencher) | (preencher) |
+| Thiago Santos Bahia | 12725136438 |
+| João Vitor Guimarães de Oliveira | 1272118643 |
+| Lincoln de Melo Alves | 12722113127 |
 
 ---
 
