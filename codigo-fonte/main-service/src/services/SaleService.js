@@ -18,6 +18,26 @@ class SaleService {
   }
 
   async create(body) {
+    // Injeta unit_price automaticamente a partir do cadastro do produto
+    if (Array.isArray(body.items)) {
+      body = {
+        ...body,
+        items: await Promise.all(
+          body.items.map(async (item) => {
+            if (item.unit_price != null) return item;
+            const product = await productRepo.findById(item.product_id);
+            if (!product) {
+              throw Object.assign(
+                new Error(`Produto ${item.product_id} nao encontrado`),
+                { statusCode: 404 }
+              );
+            }
+            return { ...item, unit_price: parseFloat(product.price) };
+          })
+        ),
+      };
+    }
+
     // Factory valida e estrutura os dados antes de qualquer operacao no banco
     const { customer_id, seller_id, notes, items } = SaleFactory.create(body);
 
