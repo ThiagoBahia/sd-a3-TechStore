@@ -1,6 +1,8 @@
-class SaleRepository {
+const BaseRepository = require('./BaseRepository');
+
+class SaleRepository extends BaseRepository {
   constructor(db) {
-    this.db = db;
+    super(db, 'sales');
   }
 
   async findAll() {

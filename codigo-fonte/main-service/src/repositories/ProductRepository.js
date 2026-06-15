@@ -1,21 +1,12 @@
-class ProductRepository {
+const BaseRepository = require('./BaseRepository');
+
+class ProductRepository extends BaseRepository {
   constructor(db) {
-    this.db = db;
+    super(db, 'products');
   }
 
   async findAll() {
-    const result = await this.db.query(
-      'SELECT * FROM products ORDER BY name ASC'
-    );
-    return result.rows;
-  }
-
-  async findById(id) {
-    const result = await this.db.query(
-      'SELECT * FROM products WHERE id = $1',
-      [id]
-    );
-    return result.rows[0] || null;
+    return super.findAll('name');
   }
 
   async create({ name, description, price, stock_quantity, category, brand, low_stock_threshold }) {
@@ -47,14 +38,6 @@ class ProductRepository {
        WHERE id = $2 AND stock_quantity >= $1
        RETURNING id, stock_quantity`,
       [quantity, productId]
-    );
-    return result.rowCount > 0;
-  }
-
-  async delete(id) {
-    const result = await this.db.query(
-      'DELETE FROM products WHERE id = $1 RETURNING id',
-      [id]
     );
     return result.rowCount > 0;
   }
