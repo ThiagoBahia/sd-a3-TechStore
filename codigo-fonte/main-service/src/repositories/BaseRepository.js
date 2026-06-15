@@ -10,8 +10,10 @@ class BaseRepository {
   }
 
   async findAll(orderBy = 'id') {
+    const allowed = ['id', 'name', 'email', 'created_at', 'updated_at', 'price', 'stock_quantity'];
+    const safeOrder = allowed.includes(orderBy) ? orderBy : 'id';
     const result = await this.db.query(
-      `SELECT * FROM ${this.tableName} ORDER BY ${orderBy}`
+      `SELECT * FROM ${this.tableName} ORDER BY ${safeOrder}`
     );
     return result.rows;
   }
