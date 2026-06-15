@@ -1,21 +1,12 @@
-class CustomerRepository {
+const BaseRepository = require('./BaseRepository');
+
+class CustomerRepository extends BaseRepository {
   constructor(db) {
-    this.db = db;
+    super(db, 'customers');
   }
 
   async findAll() {
-    const result = await this.db.query(
-      'SELECT * FROM customers ORDER BY name ASC'
-    );
-    return result.rows;
-  }
-
-  async findById(id) {
-    const result = await this.db.query(
-      'SELECT * FROM customers WHERE id = $1',
-      [id]
-    );
-    return result.rows[0] || null;
+    return super.findAll('name');
   }
 
   async create({ name, email, phone, address }) {
@@ -37,14 +28,6 @@ class CustomerRepository {
       [name, email, phone, address, id]
     );
     return result.rows[0] || null;
-  }
-
-  async delete(id) {
-    const result = await this.db.query(
-      'DELETE FROM customers WHERE id = $1 RETURNING id',
-      [id]
-    );
-    return result.rowCount > 0;
   }
 }
 

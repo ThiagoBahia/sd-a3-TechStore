@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const SaleRepository = require('../repositories/SaleRepository');
 const ProductRepository = require('../repositories/ProductRepository');
+const SaleFactory = require('../patterns/SaleFactory');
 
 const saleRepo = new SaleRepository(db);
 const productRepo = new ProductRepository(db);
@@ -16,25 +17,15 @@ class SaleService {
     return sale;
   }
 
-  async create({ customer_id, seller_id, notes, items }) {
-    if (!customer_id || !seller_id || !Array.isArray(items) || items.length === 0) {
-      throw Object.assign(
-        new Error('customer_id, seller_id e ao menos um item sao obrigatorios'),
-        { statusCode: 400 }
-      );
-    }
+  async create(body) {
+    // Factory valida e estrutura os dados antes de qualquer operacao no banco
+    const { customer_id, seller_id, notes, items } = SaleFactory.create(body);
 
     const client = await db.getClient();
     try {
       await client.query('BEGIN');
 
       for (const item of items) {
-        if (!item.product_id || !item.quantity || !item.unit_price) {
-          throw Object.assign(
-            new Error('Cada item precisa de product_id, quantity e unit_price'),
-            { statusCode: 400 }
-          );
-        }
         const ok = await productRepo.decrementStock(client, item.product_id, item.quantity);
         if (!ok) {
           throw Object.assign(
